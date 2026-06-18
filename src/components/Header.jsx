@@ -1,7 +1,6 @@
 import styled from 'styled-components'
-import Logo from './Logo'
 
-function Header({ onHome, onAlphabet }) {
+function Header({ onHome, onAlphabet, onAbout }) {
     return (
         <StyledWrapper>
             <header className="header">
@@ -10,7 +9,11 @@ function Header({ onHome, onAlphabet }) {
                 </div>
                 <nav className="nav">
                     {["Алфавит", "О словаре"].map((link) => (
-                        <span key={link} onClick={link === "Алфавит" ? onAlphabet : undefined} className="navLink">
+                        <span key={link} onClick={
+                            link === "Алфавит" ? onAlphabet :
+                                link === "О словаре" ? onAbout :
+                                    undefined
+                        } className="navLink">
               {link}
             </span>
                     ))}

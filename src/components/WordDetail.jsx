@@ -170,6 +170,11 @@ const StyledWrapper = styled.div`
     padding: 8px 12px;
     border-bottom: 1px solid rgba(0,0,0,0.06);
   }
+    @media (max-width: 768px) {
+        .bubble {
+            display: none;
+        }
+    }
 `
 
 export default WordDetail
