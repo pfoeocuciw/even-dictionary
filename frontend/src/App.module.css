@@ -1,0 +1,15 @@
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 200px);
+    grid-auto-rows: 270px;
+    gap: 24px;
+    padding: 16px;
+    justify-content: center;
+}
+
+.status {
+    text-align: center;
+    color: rgba(0, 0, 0, 0.45);
+    font-size: 14px;
+    margin: 8px 0;
+}
