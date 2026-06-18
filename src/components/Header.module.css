@@ -1,0 +1,21 @@
+.header {
+    background: white;
+    height: 56px;
+    display: flex;
+}
+
+.accent {
+    color: green;
+}
+
+.nav {
+    margin-left: auto;
+    display: flex;
+    gap: 16px;
+}
+
+.navLink {
+    font-size: 16px;
+    color: #705d5c;
+    cursor: pointer;
+}
