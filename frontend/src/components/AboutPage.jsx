@@ -1,50 +1,64 @@
+import { useEffect, useState } from 'react'
 import styled from 'styled-components'
+import { getStats } from '../api'
 
 function AboutPage({ onBack }) {
-    return (
-        <StyledWrapper>
-            <button className="backBtn" onClick={onBack}>← Назад</button>
+  const [wordCount, setWordCount] = useState(null)
 
-            <div className="container">
-                <h1 className="title">О словаре</h1>
+  useEffect(() => {
+    const controller = new AbortController()
+    getStats({ signal: controller.signal })
+      .then((data) => setWordCount(data.words))
+      .catch((err) => {
+        if (err.name !== 'AbortError') console.error(err)
+      })
+    return () => controller.abort()
+  }, [])
 
-                <div className="section">
-                    <p className="text">
-                        Вепсско-русский словарь — это удобный онлайн-инструмент для изучения и исследования вепсского языка.
-                        Здесь вы найдёте слова с транскрипцией, переводом, примерами употребления и грамматическими формами.
-                        Словарь создан для лингвистов, исследователей и всех, кто интересуется вепсским языком.
-                    </p>
-                </div>
+  return (
+    <StyledWrapper>
+      <button className="backBtn" onClick={onBack}>← Назад</button>
 
-                <div className="section">
-                    <h2 className="subtitle">О вепсском языке</h2>
-                    <p className="text">
-                        Вепсский язык — язык вепсов, одного из финно-угорских народов России, проживающих
-                        на территории Карелии, Ленинградской и Вологодской областей. Язык относится к прибалтийско-финской
-                        ветви финно-угорской семьи и является близкородственным финскому и карельскому языкам.
-                        На сегодняшний день вепсский язык находится под угрозой исчезновения — число носителей
-                        составляет около 3000 человек. Сохранение и документация языка является важной задачей
-                        современной лингвистики.
-                    </p>
-                </div>
+      <div className="container">
+        <h1 className="title">О словаре</h1>
 
-                <div className="cards">
-                    <div className="infoCard">
-                        <span className="number">~3000</span>
-                        <span className="label">носителей языка</span>
-                    </div>
-                    <div className="infoCard">
-                        <span className="number">5661</span>
-                        <span className="label">слов в словаре</span>
-                    </div>
-                    <div className="infoCard">
-                        <span className="number">3</span>
-                        <span className="label">региона России</span>
-                    </div>
-                </div>
-            </div>
-        </StyledWrapper>
-    )
+        <div className="section">
+          <p className="text">
+            Вепсско-русский словарь — это удобный онлайн-инструмент для изучения и исследования вепсского языка.
+            Здесь вы найдёте слова с транскрипцией, переводом, примерами употребления и грамматическими формами.
+            Словарь создан для лингвистов, исследователей и всех, кто интересуется вепсским языком.
+          </p>
+        </div>
+
+        <div className="section">
+          <h2 className="subtitle">О вепсском языке</h2>
+          <p className="text">
+            Вепсский язык — язык вепсов, одного из финно-угорских народов России, проживающих
+            на территории Карелии, Ленинградской и Вологодской областей. Язык относится к прибалтийско-финской
+            ветви финно-угорской семьи и является близкородственным финскому и карельскому языкам.
+            На сегодняшний день вепсский язык находится под угрозой исчезновения — число носителей
+            составляет около 3000 человек. Сохранение и документация языка является важной задачей
+            современной лингвистики.
+          </p>
+        </div>
+
+        <div className="cards">
+          <div className="infoCard">
+            <span className="number">~3000</span>
+            <span className="label">носителей языка</span>
+          </div>
+          <div className="infoCard">
+            <span className="number">{wordCount ?? '…'}</span>
+            <span className="label">слов в словаре</span>
+          </div>
+          <div className="infoCard">
+            <span className="number">3</span>
+            <span className="label">региона России</span>
+          </div>
+        </div>
+      </div>
+    </StyledWrapper>
+  )
 }
 
 const StyledWrapper = styled.div`

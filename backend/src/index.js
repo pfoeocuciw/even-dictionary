@@ -17,7 +17,7 @@ const app = express()
 if (process.env.NODE_ENV !== 'production') {
   app.use(cors({
     origin(origin, callback) {
-      if (!origin || /^http:\/\/localhost:\d+$/.test(origin)) {
+      if (!origin || /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin)) {
         callback(null, true)
         return
       }
@@ -52,8 +52,8 @@ if (existsSync(FRONTEND_DIST)) {
   })
 }
 
-const server = app.listen(PORT, () => {
-  console.log(`Сервер: http://localhost:${PORT}`)
+const server = app.listen(PORT, '127.0.0.1', () => {
+  console.log(`Сервер: http://127.0.0.1:${PORT}`)
 })
 
 server.on('error', (err) => {

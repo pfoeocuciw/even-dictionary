@@ -25,3 +25,10 @@ export function getWord(id, { signal } = {}) {
 export function getAlphabet({ signal } = {}) {
   return request('/alphabet', { signal })
 }
+
+export function getStats({ signal } = {}) {
+  return fetch('/api/health', { signal }).then(async (res) => {
+    if (!res.ok) throw new Error(`Ошибка запроса: ${res.status}`)
+    return res.json()
+  })
+}
