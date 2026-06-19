@@ -2,8 +2,18 @@ node_modules/
 dist/
 *.local
 .DS_Store
+.env
+.env.*
+!.env.*.example
 
 # IDE
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# Terraform — never commit secrets or local state
+infra/terraform.tfvars
+infra/.terraform/
+infra/.terraform.lock.hcl
+infra/terraform.tfstate
+infra/terraform.tfstate.backup

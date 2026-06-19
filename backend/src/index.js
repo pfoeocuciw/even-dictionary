@@ -10,7 +10,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const PORT = Number(process.env.PORT) || 3001
 const FRONTEND_DIST = resolve(__dirname, '../../frontend/dist')
 
-dictionary.load()
+await dictionary.load()
 
 const app = express()
 
