@@ -1,0 +1,13 @@
+# Copy this file to terraform.tfvars and fill in real values.
+# terraform.tfvars is gitignored — never commit secrets.
+
+cloud_id  = "b1g..."   # yc config get cloud-id
+folder_id = "b1g..."   # yc config get folder-id
+zone      = "ru-central1-a"
+
+# Contents of your public SSH key, e.g.:
+# ssh_public_key = "ssh-ed25519 AAAA... user@host"
+ssh_public_key = ""
+
+db_password = "change-me-strong-password"
+

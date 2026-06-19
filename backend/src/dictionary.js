@@ -1,96 +1,99 @@
-import { readFileSync } from 'node:fs'
-import { resolve, dirname } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { pool } from './db.js'
 
-const __dirname = dirname(fileURLToPath(import.meta.url))
-
-const WORDS_PATH = process.env.WORDS_FILE
-  ?? resolve(__dirname, '../../words_llm.json')
-
-function normalizeForms(forms) {
-  if (!forms?.length) return []
-
-  return forms.map((f) => ({
-    name: f.label ?? f.case ?? f.name ?? '',
-    sg: f.form ?? f.sg ?? '',
-    pl: f.pl ?? null,
-  }))
-}
-
-function normalizeWord(raw, id) {
+function toSummary(row) {
   return {
-    id,
-    word: raw.word ?? '',
-    ipa: raw.ipa ?? '',
-    pos: raw.pos ?? '',
-    translation: raw.translation ?? '',
-    alt: raw.alt ?? '',
-    tags: raw.tags ?? [],
-    examples: raw.examples ?? [],
-    forms: normalizeForms(raw.forms),
+    id: row.id,
+    word: row.word,
+    ipa: row.ipa,
+    pos: row.pos,
+    translation: row.translation,
   }
 }
 
-function toSummary(word) {
+function toFull(row) {
   return {
-    id: word.id,
-    word: word.word,
-    ipa: word.ipa,
-    pos: word.pos,
-    translation: word.translation,
+    id: row.id,
+    word: row.word,
+    ipa: row.ipa,
+    pos: row.pos,
+    translation: row.translation,
+    alt: row.alt,
+    tags: row.tags,
+    examples: row.examples,
+    forms: row.forms,
   }
 }
 
-class Dictionary {
-  #words = []
-  #byId = new Map()
-
-  load() {
-    const raw = JSON.parse(readFileSync(WORDS_PATH, 'utf-8'))
-    this.#words = raw.map((entry, index) => normalizeWord(entry, index + 1))
-    this.#byId = new Map(this.#words.map((w) => [w.id, w]))
-    console.log(`Загружено слов: ${this.#words.length}`)
-  }
+export const dictionary = {
+  async load() {
+    const { rows } = await pool.query('SELECT COUNT(*)::int AS n FROM words')
+    console.log(`Слов в БД: ${rows[0].n}`)
+    this._count = rows[0].n
+  },
 
   get count() {
-    return this.#words.length
-  }
+    return this._count ?? 0
+  },
 
-  getById(id) {
-    return this.#byId.get(Number(id)) ?? null
-  }
+  async getById(id) {
+    const { rows } = await pool.query('SELECT * FROM words WHERE id = $1', [Number(id)])
+    return rows[0] ? toFull(rows[0]) : null
+  },
 
-  search(query = '', { limit = 60, offset = 0 } = {}) {
-    const q = query.trim().toLowerCase()
-    const filtered = q
-      ? this.#words.filter((w) =>
-          w.word.toLowerCase().includes(q)
-          || w.translation.toLowerCase().includes(q),
-        )
-      : this.#words
+  async search(query = '', { limit = 60, offset = 0 } = {}) {
+    const q = query.trim()
+    let totalRows, dataRows
 
-    const slice = filtered.slice(offset, offset + limit)
+    if (q) {
+      const pattern = `%${q}%`
+      ;({ rows: totalRows } = await pool.query(
+        `SELECT COUNT(*)::int AS n FROM words
+         WHERE word ILIKE $1 OR translation ILIKE $1`,
+        [pattern],
+      ))
+      ;({ rows: dataRows } = await pool.query(
+        `SELECT id,word,ipa,pos,translation FROM words
+         WHERE word ILIKE $1 OR translation ILIKE $1
+         ORDER BY
+           CASE WHEN word ILIKE $2 THEN 0 ELSE 1 END,
+           word
+         LIMIT $3 OFFSET $4`,
+        [pattern, `${q}%`, limit, offset],
+      ))
+    } else {
+      ;({ rows: totalRows } = await pool.query('SELECT COUNT(*)::int AS n FROM words'))
+      ;({ rows: dataRows } = await pool.query(
+        'SELECT id,word,ipa,pos,translation FROM words ORDER BY id LIMIT $1 OFFSET $2',
+        [limit, offset],
+      ))
+    }
 
     return {
-      total: filtered.length,
+      total: totalRows[0].n,
       offset,
       limit,
-      words: slice.map(toSummary),
+      words: dataRows.map(toSummary),
     }
-  }
+  },
 
-  getAlphabetSamples() {
+  async getAlphabetSamples() {
     const letters = [
       'A', 'Ä', 'B', 'C', 'Č', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L',
       'M', 'N', 'O', 'Ö', 'P', 'R', 'S', 'Š', 'T', 'U', 'V', 'Y', 'Z', 'Ž', '’',
     ]
 
-    return letters.map((letter) => {
-      const ch = letter[0].toLowerCase()
-      const word = this.#words.find((w) => w.word.toLowerCase().startsWith(ch))
-      return { letter, word: word ? toSummary(word) : null }
-    })
-  }
+    const results = await Promise.all(
+      letters.map(async (letter) => {
+        const ch = letter[0].toLowerCase()
+        const { rows } = await pool.query(
+          `SELECT id,word,ipa,pos,translation FROM words
+           WHERE lower(word) LIKE $1
+           ORDER BY id LIMIT 1`,
+          [`${ch}%`],
+        )
+        return { letter, word: rows[0] ? toSummary(rows[0]) : null }
+      }),
+    )
+    return results
+  },
 }
-
-export const dictionary = new Dictionary()
